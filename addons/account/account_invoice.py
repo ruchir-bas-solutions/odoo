@@ -106,6 +106,7 @@ class account_invoice(osv.osv):
             nb_inv_in_partial_rec = max_invoice_id = 0
             result[invoice.id] = 0.0
             if invoice.move_id:
+                partial_reconciliations_done = []
                 for aml in invoice.move_id.line_id:
                     if aml.account_id.type in ('receivable','payable'):
                         if aml.currency_id and aml.currency_id.id == invoice.currency_id.id:
@@ -113,7 +114,8 @@ class account_invoice(osv.osv):
                         else:
                             ctx['date'] = aml.date
                             result[invoice.id] += currency_obj.compute(cr, uid, aml.company_id.currency_id.id, invoice.currency_id.id, aml.amount_residual, context=ctx)
-
+                        if aml.reconcile_partial_id and aml.reconcile_partial_id.id in partial_reconciliations_done:
+                            continue
                         if aml.reconcile_partial_id.line_partial_ids:
                             #we check if the invoice is partially reconciled and if there are other invoices
                             #involved in this partial reconciliation (and we sum these invoices)
@@ -122,6 +124,7 @@ class account_invoice(osv.osv):
                                     nb_inv_in_partial_rec += 1
                                     #store the max invoice id as for this invoice we will make a balance instead of a simple division
                                     max_invoice_id = max(max_invoice_id, line.invoice.id)
+                            partial_reconciliations_done.append(aml.reconcile_partial_id.id)
             if nb_inv_in_partial_rec:
                 #if there are several invoices in a partial reconciliation, we split the residual by the number
                 #of invoice to have a sum of residual amounts that matches the partner balance
