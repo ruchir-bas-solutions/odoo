@@ -5550,7 +5550,7 @@ jQuery.each({
         },
         contents: function( elem ) {
                 return jQuery.nodeName( elem, "iframe" ) ?
-                        elem.contentDocument || elem.contentWindow.document :
+                        elem.contentDocument || (elem.contentWindow && elem.contentWindow.document) || '' :
                         jQuery.merge( [], elem.childNodes );
         }
 }, function( name, fn ) {
